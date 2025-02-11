@@ -16,9 +16,9 @@ def run_nmap_scan(target):
 
         conn = mysql.connector.connect(
             host="localhost",
-            user="root",  # Replace with your MySQL username
-            password="scannerdb123",  # Replace with your MySQL password
-            database="scanDB"  # The name of your database
+            user="",  # Replace with your MySQL username
+            password="",  # Replace with your MySQL password
+            database=""  # The name of your database
         )
         cursor = conn.cursor()
 
