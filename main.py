@@ -1,32 +1,35 @@
 import nmap
 import mysql.connector
+import pswd
 
 # Run the Nmap scan
 def run_nmap_scan(target):
     try:
         nm = nmap.PortScanner()
-        print(f"Scanning {target} on all ports (1-55)...")
+        print(f"Scanning {target} on all ports (1-1000)...")
         
         # Perform the scan
-        nm.scan(target, '1-55')
-        print("test")
+        nm.scan(target, '1-1000', "-Pn")
         # Print the scan info and stats
         print("Scan Info:", nm.scaninfo())
         print("Scan Stats:", nm.scanstats())
 
         conn = mysql.connector.connect(
-            host="localhost",
-            user="",  # Replace with your MySQL username
-            password="",  # Replace with your MySQL password
-            database=""  # The name of your database
+            host=pswd.host,
+            user=pswd.user,  # Replace with your MySQL username
+            password=pswd.password,  # Replace with your MySQL password
+            database=pswd.database  # The name of your database
         )
         cursor = conn.cursor()
 
+        if conn.is_connected:
+            print("Success")
+        else:
+            print("Failed")
 
         # Print open ports and scan results
         for host in nm.all_hosts():
             ip_address = host
-
             # Get the protocol information
             for protocol in nm[host].all_protocols():
                 ports = nm[host][protocol].keys()  # Get the list of ports scanned for the protocol
