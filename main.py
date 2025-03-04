@@ -2,6 +2,7 @@ import nmap
 import mysql.connector
 import pswd
 import ipaddress
+import socket
 
 conn = mysql.connector.connect(
     host=pswd.host,
@@ -31,26 +32,39 @@ def run_nmap_scan(target):
         # Print open ports and scan results
         for host in nm.all_hosts():
             ip_address = host
-            # Get the protocol information
-            for protocol in nm[host].all_protocols():
-                ports = nm[host][protocol].keys()  # Get the list of ports scanned for the protocol
-                for port in ports:
-                    state = nm[host][protocol][port]['state']
-                    if state == 'open':  # Only store open ports
-                        # Insert the IP address and protocol into the scans table
-                        insert_query = "INSERT INTO scans (ip, protocol) VALUES (%s, %s)"
-                        cursor.execute(insert_query, (ip_address, protocol))
-                        conn.commit()
-                        print("Results saved to scanDB")
+            open_ports = []
+            isp = None
 
-            print(f"\nHost: {host} ({nm[host].hostname()})")
-            print(f"State: {nm[host].state()}")
+        #Get the time of the scan
+        scan_time = nm.scanstats().get('timestr')
 
-            for proto in nm[host].all_protocols():
-                print(f"Protocol: {proto}")
-                lport = nm[host][proto].keys()
-                for port in sorted(lport):
-                    print(f"Port: {port}\tState: {nm[host][proto][port]['state']}")
+        try:
+            isp = socket.gethostbyaddr(ip_address)[0]
+        except socket.herror:
+            isp = "Unknown ISP"
+
+        # Get the protocol information
+        for protocol in nm[host].all_protocols():
+            ports = nm[host][protocol].keys()  # Get the list of ports scanned for the protocol
+            for port in ports:
+                state = nm[host][protocol][port]['state']
+                if state == 'open':  # Only store open ports
+                    open_ports.append(port)
+                    open_ports_str = ','.join(map(str, open_ports))
+                # Insert the IP address and protocol into the scans table
+                insert_query = """INSERT INTO scans (ip, protocol, open_ports, scan_time, isp) VALUES (%s, %s, %s, %s, %s)"""
+                cursor.execute(insert_query, (ip_address, protocol, open_ports_str, scan_time, isp))
+                conn.commit()
+                print("Results saved to scanDB")
+
+        print(f"\nHost: {host} ({nm[host].hostname()})")
+        print(f"State: {nm[host].state()}")
+
+        for proto in nm[host].all_protocols():
+            print(f"Protocol: {proto}")
+            lport = nm[host][proto].keys()
+            for port in sorted(lport):
+                print(f"Port: {port}\tState: {nm[host][proto][port]['state']}")
     
     except Exception as e:
         print(f"An error occurred: {str(e)}")
