@@ -1,6 +1,20 @@
 import nmap
 import mysql.connector
 import pswd
+import ipaddress
+
+conn = mysql.connector.connect(
+    host=pswd.host,
+    user=pswd.user,  # Replace with your MySQL username
+    password=pswd.password,  # Replace with your MySQL password
+    database=pswd.database  # The name of your database
+)
+cursor = conn.cursor()
+
+if conn.is_connected:
+    print("Success")
+else:
+    print("Failed")
 
 # Run the Nmap scan
 def run_nmap_scan(target):
@@ -13,19 +27,6 @@ def run_nmap_scan(target):
         # Print the scan info and stats
         print("Scan Info:", nm.scaninfo())
         print("Scan Stats:", nm.scanstats())
-
-        conn = mysql.connector.connect(
-            host=pswd.host,
-            user=pswd.user,  # Replace with your MySQL username
-            password=pswd.password,  # Replace with your MySQL password
-            database=pswd.database  # The name of your database
-        )
-        cursor = conn.cursor()
-
-        if conn.is_connected:
-            print("Success")
-        else:
-            print("Failed")
 
         # Print open ports and scan results
         for host in nm.all_hosts():
@@ -54,7 +55,19 @@ def run_nmap_scan(target):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
+
+def iterate_ips(start_ip, end_ip):
+    start = ipaddress.IPv4Address(start_ip)
+    end = ipaddress.IPv4Address(end_ip)
+    current = start
+    while current <= end:
+        print("Current scanning: " + current.compressed)
+        run_nmap_scan(current.compressed)
+        current += 1
+
 # Main code
-print("Enter IP to scan")
-target = input()
-run_nmap_scan(target)
+print("Enter start of IP range to scan")
+start = input()
+print("Enter end value og IP range to scan")
+end = input()
+iterate_ips(start, end)
